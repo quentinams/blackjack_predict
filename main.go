@@ -1,23 +1,28 @@
 package main
 
 import (
-	"awesomeProject/input"
+	"awesomeProject/game"
 	"awesomeProject/predict"
+	"flag"
 	"fmt"
+	"strconv"
 )
 
 func main() {
-	dealer, player := input.CheckArgs()
-	fmt.Println("Dealer cards:", dealer)
-	fmt.Println("Player cards:", player)
-
-	strategyTable, err := predict.LoadStrategyTable("csv_strategie/strat.csv")
+	fileName := flag.String("file", "csv_strategie/strat.csv", "Nom du fichier de stratégie CSV")
+	numTests := flag.String("tests", "1000000", "Nombre d'essais")
+	flag.Parse()
+	numTestsInt, err := strconv.Atoi(*numTests)
+	if err != nil {
+		fmt.Println("Erreur lors de la conversion du nombre de tests :", err)
+		return
+	}
+	strategyTable, err := predict.LoadStrategyTable(*fileName)
 	if err != nil {
 		fmt.Println("Erreur lors du chargement de la table de stratégie :", err)
 		return
 	}
-	playerHand := player
-	dealerCard := dealer
-	action := predict.Predict(strategyTable, playerHand, dealerCard)
-	fmt.Printf("Action recommandée pour la main %s contre la carte du croupier %s : %s\n", playerHand, dealerCard, action)
+
+	fmt.Printf("Start test of predict with %d tests\n\n", numTestsInt)
+	game.Game(strategyTable, numTestsInt)
 }

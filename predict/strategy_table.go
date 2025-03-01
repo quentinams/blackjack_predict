@@ -17,7 +17,7 @@ func actionFromCode(code string) Action {
 	case "4":
 		return Split
 	default:
-		return Hit // par défaut, Hit si le code est inconnu
+		return Hit
 	}
 }
 

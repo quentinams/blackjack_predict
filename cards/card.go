@@ -35,4 +35,5 @@ func init() {
 	Valet = Card{Name: "Valet", Value: 10}
 	Dame = Card{Name: "Dame", Value: 10}
 	Roi = Card{Name: "Roi", Value: 10}
+
 }
