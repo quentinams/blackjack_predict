@@ -5,24 +5,35 @@ import (
 	"awesomeProject/predict"
 	"flag"
 	"fmt"
-	"strconv"
+	"log"
 )
 
 func main() {
-	fileName := flag.String("file", "csv_strategie/strat.csv", "Nom du fichier de stratégie CSV")
-	numTests := flag.String("tests", "1000000", "Nombre d'essais")
+	// Définition des flags
+	numberTests := flag.Int("tests", 1000, "Nombre de parties à simuler")
+	initialCash := flag.Int("cash", 10000, "Mise initiale par partie")
 	flag.Parse()
-	numTestsInt, err := strconv.Atoi(*numTests)
-	if err != nil {
-		fmt.Println("Erreur lors de la conversion du nombre de tests :", err)
-		return
+
+	// Vérification des arguments
+	if *numberTests <= 0 {
+		log.Fatal("Le nombre de tests doit être positif")
 	}
-	strategyTable, err := predict.LoadStrategyTable(*fileName)
-	if err != nil {
-		fmt.Println("Erreur lors du chargement de la table de stratégie :", err)
-		return
+	if *initialCash <= 0 {
+		log.Fatal("La mise initiale doit être positive")
 	}
 
-	fmt.Printf("Start test of predict with %d tests\n\n", numTestsInt)
-	game.Game(strategyTable, numTestsInt)
+	// Chargement de la table de stratégie
+	strategyTable, err := predict.LoadStrategyTable("csv_strategie/strat.csv")
+	if err != nil {
+		log.Fatal("Erreur lors du chargement de la table de stratégie :", err)
+	}
+
+	// Affichage des paramètres
+	fmt.Printf("Démarrage de la simulation avec:\n")
+	fmt.Printf("- Nombre de parties: %d\n", *numberTests)
+	fmt.Printf("- Mise initiale: %d\n", *initialCash)
+	fmt.Println("----------------------------------------")
+
+	// Lancement de la simulation
+	game.Game(strategyTable, *numberTests, *initialCash)
 }

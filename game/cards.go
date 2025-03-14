@@ -46,13 +46,12 @@ func Shuffle(deck []Card) []Card {
 func NewDeck() []Card {
 	suits := []Suit{Spades, Hearts, Diamonds, Clubs}
 	ranks := []Rank{Ace, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King}
-	value := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10}
+	values := []int{11, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10}
 	deck := make([]Card, 0, 52)
 
 	for _, suit := range suits {
-		for _, rank := range ranks {
-			deck = append(deck, Card{Suit: suit, Rank: rank, Value: value[len(deck)%13]})
-
+		for i, rank := range ranks {
+			deck = append(deck, Card{Suit: suit, Rank: rank, Value: values[i]})
 		}
 	}
 
@@ -63,4 +62,31 @@ func Draw(deck *[]Card) Card {
 	card := (*deck)[0]
 	*deck = (*deck)[1:]
 	return card
+}
+
+// CalculatePoints calcule le total d'une main en gérant correctement les As
+func CalculatePoints(hand []Card) int {
+	points := 0
+	aces := 0
+
+	// D'abord, on compte tous les points sans les As
+	for _, card := range hand {
+		if card.Rank == Ace {
+			aces++
+		} else {
+			points += card.Value
+		}
+	}
+
+	// Ensuite, on ajoute les As de manière optimale
+	for aces > 0 {
+		if points+11 <= 21 {
+			points += 11
+		} else {
+			points += 1
+		}
+		aces--
+	}
+
+	return points
 }

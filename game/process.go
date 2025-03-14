@@ -7,15 +7,27 @@ import (
 	"strings"
 )
 
-func Game(strategyTable map[string]predict.Action, number_test int) {
+func Game(strategyTable map[string]predict.Action, number_test int, initialCash int) {
 	game_win := 0
-	var game_lose = 0
-	var game_tie = 0
+	game_lose := 0
+	game_tie := 0
 	totalTests := number_test
+	totalCash := 0
+	currentBet := 5
+	// Création d'un seul joueur qui garde son argent entre les parties
+	var player = Player{Cash: initialCash, Hand: []Card{}}
+	
 	for number_test > 0 {
-		var player = Player{Cash: 100, Hand: []Card{}}
+		// Réinitialisation de la main du joueur pour chaque partie
+		player.Hand = []Card{}
 		var dealer = Dealer{Hand: []Card{}}
 		var deck = NewDeck()
+
+		// Vérification si le joueur a assez d'argent pour jouer
+		if player.Cash - currentBet < 5 {
+			fmt.Printf("\nLe joueur n'a plus assez d'argent pour continuer (Cash: %d)\n", player.Cash)
+			break
+		}
 
 		player.AddCard(Draw(&deck))
 		player.AddCard(Draw(&deck))
@@ -44,7 +56,7 @@ func Game(strategyTable map[string]predict.Action, number_test int) {
 				if len(player.Hand) == 2 && !playerHasDoubled {
 					player.AddCard(Draw(&deck))
 					playerHasDoubled = true
-					player.Cash *= 2
+					currentBet *= 2
 					break
 				}
 			} else if action == "Split" {
@@ -81,18 +93,24 @@ func Game(strategyTable map[string]predict.Action, number_test int) {
 					dealer.Play(&deck)
 					dealerPoints := CalculatePoints(dealer.Hand)
 
+					// Gestion des gains/pertes pour la première main splitée
 					if dealerPoints > 21 || playerPoints1 > dealerPoints {
 						game_win++
+						player.Cash += currentBet
 					} else if playerPoints1 < dealerPoints {
 						game_lose++
+						player.Cash -= currentBet
 					} else {
 						game_tie++
 					}
 
+					// Gestion des gains/pertes pour la deuxième main splitée
 					if dealerPoints > 21 || playerPoints2 > dealerPoints {
 						game_win++
+						player.Cash += currentBet
 					} else if playerPoints2 < dealerPoints {
 						game_lose++
+						player.Cash -= currentBet
 					} else {
 						game_tie++
 					}
@@ -114,11 +132,14 @@ func Game(strategyTable map[string]predict.Action, number_test int) {
 
 		if dealerPoints > 21 || playerPoints > dealerPoints {
 			game_win++
+			player.Cash += currentBet
 		} else if playerPoints < dealerPoints {
 			game_lose++
+			player.Cash -= currentBet
 		} else {
 			game_tie++
 		}
+		totalCash += player.Cash
 		number_test--
 
 		// Update progress bar
@@ -129,6 +150,15 @@ func Game(strategyTable map[string]predict.Action, number_test int) {
 	fmt.Printf("Tie games: %d\n", game_tie)
 	winRate := float64(game_win) / float64(game_win+game_lose+game_tie) * 100
 	fmt.Printf("Win rate: %.2f%%\n", winRate)
+	
+	// Calcul et affichage des statistiques d'argent
+	profitLoss := float64(player.Cash) - float64(initialCash)
+	profitLossPercentage := (profitLoss / float64(initialCash)) * 100
+	
+	fmt.Printf("\nStatistiques d'argent:\n")
+	fmt.Printf("Argent final: %.2f\n", float64(player.Cash))
+	fmt.Printf("Profit/Perte total: %.2f\n", profitLoss)
+	fmt.Printf("Rendement: %.2f%%\n", profitLossPercentage)
 }
 
 func printProgressBar(current, total int) {
@@ -148,7 +178,7 @@ func ShowDeck(deck []Card) {
 	}
 }
 
-func CalculatePoints(hand []Card) int {
+func GetHandValue(hand []Card) int {
 	points := 0
 	ace := 0
 	for _, card := range hand {
